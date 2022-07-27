@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "fileutils"
+require "yaml"
+require "rss"
+
+begin
+  config = YAML.load_file "#{Dir.home}/.coolinx.yml"
+rescue StandardError
+  abort "unable to load coolinx config file"
+end
+
+link_hash = {}
+links = Dir.glob("*yml", base: config["links_dir"])
+links.each do |l|
+  contents = YAML.load_file(File.join(config["links_dir"], l), permitted_classes: [Date])
+  key = l.gsub(".yml", "")
+  link_hash[key] = {
+    name: contents["name"],
+    url: contents["url"],
+    date: contents["date"]
+  }
+  link_hash[key][:tags] = contents["tags"] if contents["tags"]
+  link_hash[key][:desc] = contents["desc"] if contents["desc"]
+end
+
+# TODO: pagination
+
+ll = link_hash.sort_by { |_, v| v[:date] }.reverse
+rss = RSS::Maker.make("2.0") do |maker|
+  maker.channel.language = "en"
+  maker.channel.author = config["rss"]["author"]
+  maker.channel.updated = Time.now.to_s
+  maker.channel.about = config["rss"]["url"]
+  maker.channel.link = config["rss"]["url"]
+  maker.channel.description = config["rss"]["description"]
+  maker.channel.title = config["rss"]["title"]
+
+  ll.each do |_, link|
+    maker.items.new_item do |item|
+      item.link = link[:url]
+      item.title = link[:name]
+      item.description = link[:desc] if link[:desc]
+      item.updated = link[:date].to_s
+    end
+  end
+end
+
+p link_hash
+FileUtils.mkdir_p config["output_dir"]
+f = File.open("#{config["output_dir"]}/index.rss", "w")
+f.write(rss)
+f.close
