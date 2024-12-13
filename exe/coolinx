@@ -38,7 +38,7 @@ rss = RSS::Maker.make("2.0") do |maker|
   maker.channel.description = config["rss"]["description"]
   maker.channel.title = config["rss"]["title"]
 
-  ll.each do |_, link|
+  ll.each_value do |link|
     maker.items.new_item do |item|
       item.link = link[:url]
       item.title = link[:name]
