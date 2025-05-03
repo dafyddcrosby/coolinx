@@ -1,0 +1,11 @@
+.gitignore
+.rubocop.yml
+CODE_OF_CONDUCT.md
+Gemfile
+LICENSE
+README.md
+Rakefile
+coolinx.gemspec
+exe/coolinx
+lib/coolinx.rb
+lib/coolinx/version.rb
